@@ -192,7 +192,7 @@ else
         var importUrl = $"{organizerBase}/import-score#r={encoded}";
 
         var label = invite.Title ?? $"Table {invite.TableNumber}";
-        var message = $"{label}\n{importUrl}";
+        var message = $"✅ {label}\n{Lang.Get("ShareResultInstruction")}\n{importUrl}";
         await JS.InvokeVoidAsync("copyTextToClipboard", message);
         copied = true;
         StateHasChanged();
