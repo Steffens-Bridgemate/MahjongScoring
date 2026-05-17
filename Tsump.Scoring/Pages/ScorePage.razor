@@ -57,7 +57,7 @@ else
     </div>
 
     <QrCodeModal IsOpen="showResultQr" Url="@resultQrUrl" Title="@resultQrTitle"
-                 Subtitle="@Lang.Get("QrCodeResultSubtitle")"
+                 Subtitle="@(resultQrCopied ? Lang.Get("QrCopiedToClipboard") : Lang.Get("QrCodeResultSubtitle"))"
                  OnClose="CloseResultQr" />
 }
 
@@ -73,6 +73,7 @@ else
     private bool showResultQr;
     private string? resultQrUrl;
     private string? resultQrTitle;
+    private bool resultQrCopied;
     private string StorageKey => invite == null ? "" : $"tsump_scoring_{invite.HanchanId}_{invite.TableNumber}";
 
     protected override void OnInitialized()
@@ -220,7 +221,7 @@ else
         return (importUrl, label);
     }
 
-    private void ShowResultQr()
+    private async Task ShowResultQr()
     {
         var built = BuildResultUrl();
         if (built == null) return;
@@ -230,7 +231,20 @@ else
             ? $"{Lang.Get("Hanchan")} {invite.HanchanNumber} — {Lang.Get("Table")} {invite.TableNumber}"
             : built.Value.title;
         showResultQr = true;
+        resultQrCopied = false;
         StateHasChanged();
+
+        try
+        {
+            var svg = Tsump.Scoring.QrCodeRenderer.ToSvg(resultQrUrl);
+            var ok = await JS.InvokeAsync<bool>("copyQrImageToClipboard", svg, 480);
+            if (ok)
+            {
+                resultQrCopied = true;
+                StateHasChanged();
+            }
+        }
+        catch { /* unsupported / blocked */ }
     }
 
     private void CloseResultQr()
