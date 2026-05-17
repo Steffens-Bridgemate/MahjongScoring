@@ -42,6 +42,12 @@ else
             <button class="btn btn-success" @onclick="CopyResultLink">
                 <i class="bi bi-clipboard me-1"></i>@(copied ? Lang.Get("Copied") : Lang.Get("CopyResultLink"))
             </button>
+            <button class="btn btn-outline-success"
+                    @onclick="ShowResultQr"
+                    title="@Lang.Get("ShowQrCode")"
+                    aria-label="@Lang.Get("ShowQrCode")">
+                <i class="bi bi-qr-code"></i>
+            </button>
             <span class="text-muted small">@Lang.Get("ResultReadyHint")</span>
         }
         else
@@ -49,6 +55,10 @@ else
             <span class="text-muted">@Lang.Get("FillInScoresHint")</span>
         }
     </div>
+
+    <QrCodeModal IsOpen="showResultQr" Url="resultQrUrl" Title="resultQrTitle"
+                 Subtitle="@Lang.Get("QrCodeResultSubtitle")"
+                 OnClose="CloseResultQr" />
 }
 
 @code {
@@ -60,6 +70,9 @@ else
     private bool resultReady;
     private bool copied;
     private int clearVersion;
+    private bool showResultQr;
+    private string? resultQrUrl;
+    private string? resultQrTitle;
     private string StorageKey => invite == null ? "" : $"tsump_scoring_{invite.HanchanId}_{invite.TableNumber}";
 
     protected override void OnInitialized()
@@ -171,9 +184,9 @@ else
         await Storage.SetAsync(StorageKey, saved);
     }
 
-    private async Task CopyResultLink()
+    private (string url, string title)? BuildResultUrl()
     {
-        if (invite == null || tableAssignment?.Score == null) return;
+        if (invite == null || tableAssignment?.Score == null) return null;
 
         var scores = tableAssignment.Score.PlayerScores
             .Where(p => !p.IsVirtual && p.EndPoints.HasValue)
@@ -190,9 +203,33 @@ else
             ? invite.OrganizerUrl!.TrimEnd('/')
             : Nav.BaseUri.TrimEnd('/');
         var importUrl = $"{organizerBase}/import-score#r={encoded}";
-
         var label = invite.Title ?? $"Table {invite.TableNumber}";
-        var message = $"✅ {label}\n{Lang.Get("ShareResultInstruction")}\n{importUrl}";
+        return (importUrl, label);
+    }
+
+    private void ShowResultQr()
+    {
+        var built = BuildResultUrl();
+        if (built == null) return;
+        resultQrUrl = built.Value.url;
+        resultQrTitle = built.Value.title;
+        showResultQr = true;
+        StateHasChanged();
+    }
+
+    private void CloseResultQr()
+    {
+        showResultQr = false;
+        resultQrUrl = null;
+        resultQrTitle = null;
+    }
+
+    private async Task CopyResultLink()
+    {
+        var built = BuildResultUrl();
+        if (built == null) return;
+
+        var message = $"✅ {built.Value.title}\n{Lang.Get("ShareResultInstruction")}\n{built.Value.url}";
         await JS.InvokeVoidAsync("copyTextToClipboard", message);
         copied = true;
         StateHasChanged();
