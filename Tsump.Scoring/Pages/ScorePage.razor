@@ -214,7 +214,7 @@ else
         resultQrUrl = built.Value.url;
         // Short title for the QR modal — full label/date is in the WhatsApp message.
         resultQrTitle = invite != null
-            ? $"{Lang.Get("Hanchan")} — {Lang.Get("Table")} {invite.TableNumber}"
+            ? $"{Lang.Get("Hanchan")} {invite.HanchanNumber} — {Lang.Get("Table")} {invite.TableNumber}"
             : built.Value.title;
         showResultQr = true;
         StateHasChanged();
