@@ -127,11 +127,15 @@ else
     {
         if (firstRender && invite != null && tableAssignment != null)
         {
-            // Restore in-progress scores from localStorage (resilience to refresh).
+            // Initialise first so PlayerScores has the real players + Mr. X entries before
+            // we try to restore values onto them. (The previous order was the opposite,
+            // restoring onto an empty PlayerScores list and silently dropping the data.)
+            ScoreTable.InitializeScores(new() { tableAssignment }, Lang.Get, invite.StartingPoints);
+
             var saved = await Storage.GetAsync<SavedScore>(StorageKey);
             if (saved != null)
             {
-                foreach (var ps in tableAssignment.Score!.PlayerScores)
+                foreach (var ps in tableAssignment.Score!.PlayerScores.Where(p => !p.IsVirtual))
                 {
                     var entry = saved.Entries.FirstOrDefault(e => e.PlayerId == ps.PlayerId);
                     if (entry != null)
@@ -141,11 +145,20 @@ else
                         ps.Penalty = entry.Penalty;
                     }
                 }
-                StateHasChanged();
+
+                // Re-derive Mr. X (not persisted) and Uma from the restored real-player values.
+                ScoreTable.DeriveVirtualEnd(tableAssignment);
+                ScoreTable.CalculateUma(tableAssignment, uma3, uma4);
+
+                // If the restored state is already valid, surface the "Copy result link"
+                // button without waiting for the user to retype anything.
+                if (tableAssignment.Score!.PlayerScores.All(p => p.EndPoints.HasValue)
+                    && tableAssignment.Score.PlayerScores.Sum(p => p.Difference) == 0)
+                {
+                    resultReady = true;
+                }
             }
 
-            // Initialize starting points + Mr. X if needed via the same helper the main app uses.
-            ScoreTable.InitializeScores(new() { tableAssignment }, Lang.Get, invite.StartingPoints);
             StateHasChanged();
         }
     }
