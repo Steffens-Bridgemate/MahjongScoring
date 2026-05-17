@@ -1,0 +1,3 @@
+[submodule "external/MahjongIndeler"]
+	path = external/MahjongIndeler
+	url = https://github.com/Steffens-Bridgemate/MahjongIndeler.git
