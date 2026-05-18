@@ -58,6 +58,7 @@ else
 
     <QrCodeModal IsOpen="showResultQr" Url="@resultQrUrl" Title="@resultQrTitle"
                  Subtitle="@(resultQrCopied ? Lang.Get("QrCopiedToClipboard") : Lang.Get("QrCodeResultSubtitle"))"
+                 Overlay="@Tsump.Scoring.QrCodeRenderer.Overlays.ScoringResult"
                  OnClose="CloseResultQr" />
 }
 
@@ -236,7 +237,7 @@ else
 
         try
         {
-            var svg = Tsump.Scoring.QrCodeRenderer.ToSvg(resultQrUrl);
+            var svg = Tsump.Scoring.QrCodeRenderer.ToSvg(resultQrUrl, overlay: Tsump.Scoring.QrCodeRenderer.Overlays.ScoringResult);
             var ok = await JS.InvokeAsync<bool>("copyQrImageToClipboard", svg, 480, resultQrTitle);
             if (ok)
             {
