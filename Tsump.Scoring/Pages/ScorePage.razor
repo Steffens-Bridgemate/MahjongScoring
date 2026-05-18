@@ -74,7 +74,7 @@ else
     private string? resultQrUrl;
     private string? resultQrTitle;
     private bool resultQrCopied;
-    private string StorageKey => invite == null ? "" : $"tsump_scoring_{invite.HanchanId}_{invite.TableNumber}";
+    private string StorageKey => invite == null ? "" : $"tsump_scoring_{invite.ContextId}_{invite.TableNumber}";
 
     protected override void OnInitialized()
     {
@@ -207,7 +207,7 @@ else
             .Select(p => new PlayerResultEntry(p.PlayerId, p.EndPoints!.Value, p.Loan, p.Penalty))
             .ToList();
 
-        var result = new ScoringResult(invite.HanchanId, invite.TableNumber, scores);
+        var result = new ScoringResult(invite.ContextId, invite.TableNumber, scores);
         var encoded = ScoringPayloadCodec.EncodeResult(result);
 
         // Build the return URL. The organizer's app lives at a different origin than this
@@ -228,7 +228,7 @@ else
         resultQrUrl = built.Value.url;
         // Short title for the QR modal — full label/date is in the WhatsApp message.
         resultQrTitle = invite != null
-            ? $"{Lang.Get("Hanchan")} {invite.HanchanNumber} — {Lang.Get("Table")} {invite.TableNumber}"
+            ? $"{Lang.Get("Hanchan")} {invite.SessionNumber} — {Lang.Get("Table")} {invite.TableNumber}"
             : built.Value.title;
         showResultQr = true;
         resultQrCopied = false;
