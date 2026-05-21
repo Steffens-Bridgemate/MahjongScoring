@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\aners\\\\source\\\\repos\\\\Steffens-Bridgemate\\\\MahjongScoring\" -Recurse -File)",
+      "Bash(Select-Object -ExpandProperty Name)",
+      "Bash(Sort-Object)",
+      "Bash(git -C \"C:\\\\Users\\\\aners\\\\source\\\\repos\\\\MahjongIndeler\" log --oneline -10)",
+      "Bash(git -C \"C:\\\\Users\\\\aners\\\\source\\\\repos\\\\Steffens-Bridgemate\\\\MahjongScoring\" submodule status)",
+      "Bash(Select-String -Path \"C:\\\\Users\\\\aners\\\\source\\\\repos\\\\MahjongIndeler\\\\Tsump\\\\wwwroot\\\\lib\\\\html5-qrcode\\\\html5-qrcode.min.js\" -Pattern \"html5-qrcode|version|Version\")",
+      "Bash(Select-Object -First 5)",
+      "WebFetch(domain:registry.npmjs.org)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "Bash(curl -sL \"https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js\" -o \"C:/Users/aners/source/repos/MahjongIndeler/Tsump/wwwroot/lib/html5-qrcode/html5-qrcode.min.js\")",
+      "Bash(curl -sL \"https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js\" -o /tmp/html5-qrcode-2.3.8.min.js)",
+      "Bash(echo \"exit: $?\")",
+      "Read(//tmp/**)"
+    ]
+  }
+}
