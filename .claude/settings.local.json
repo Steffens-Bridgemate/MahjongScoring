@@ -13,7 +13,16 @@
       "Bash(curl -sL \"https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js\" -o \"C:/Users/aners/source/repos/MahjongIndeler/Tsump/wwwroot/lib/html5-qrcode/html5-qrcode.min.js\")",
       "Bash(curl -sL \"https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js\" -o /tmp/html5-qrcode-2.3.8.min.js)",
       "Bash(echo \"exit: $?\")",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(apt list *)",
+      "Bash(find /mnt/c/Users/aners/AppData/Local/Temp -name \"*.png\" -newer /tmp/NotifyIconGeneratedAumid_18149551300092011972.png 2>/dev/null | head -10)",
+      "Read(//mnt/c/Users/aners/AppData/Local/**)",
+      "Bash(find /mnt/c/Users/aners -name \"*.png\" -newer /tmp/NotifyIconGeneratedAumid_18149551300092011972.png 2>/dev/null | grep -v node_modules | head -20)",
+      "Read(//mnt/c/Users/**)",
+      "Bash(node -e \"console.log\\('node ok'\\); const v=process.version; console.log\\(v\\);\")",
+      "Bash(dotnet --version)",
+      "Read(//c/Users/aners/AppData/Local/Temp/qrdecode/**)",
+      "Bash(dotnet run *)"
     ]
   }
 }
