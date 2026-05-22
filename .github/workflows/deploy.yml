@@ -32,7 +32,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Publish
-        run: dotnet publish Tsump.Scoring/Tsump.Scoring.csproj -c Release -o release
+        run: dotnet publish Tsump.Scoring/Tsump.Scoring.csproj -c Release -o release -p:InformationalVersion="1.${{ github.run_number }}"
 
       - name: Set base path for GitHub Pages
         run: sed -i 's|<base href="/" />|<base href="/MahjongScoring/" />|' release/wwwroot/index.html
