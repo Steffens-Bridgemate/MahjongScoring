@@ -22,7 +22,11 @@
       "Bash(node -e \"console.log\\('node ok'\\); const v=process.version; console.log\\(v\\);\")",
       "Bash(dotnet --version)",
       "Read(//c/Users/aners/AppData/Local/Temp/qrdecode/**)",
-      "Bash(dotnet run *)"
+      "Bash(dotnet run *)",
+      "Bash(git -C \"C:/Users/aners/source/repos/Steffens-Bridgemate/MahjongScoring\" rev-list --count HEAD)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet-ildasm \"C:/Users/aners/source/repos/Steffens-Bridgemate/MahjongScoring/Tsump.Scoring/bin/Release/net10.0/Tsump.Scoring.dll\")",
+      "Bash(dotnet msbuild *)"
     ]
   }
 }

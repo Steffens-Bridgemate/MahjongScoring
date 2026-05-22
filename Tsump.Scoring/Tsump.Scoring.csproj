@@ -24,4 +24,22 @@
     <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
 
+
+  <!-- Stamp InformationalVersion with the git commit count so every push produces a
+       new build number automatically. Gracefully falls back to "dev" when git is
+       unavailable (e.g. a clean Docker layer without the .git folder). -->
+  <Target Name="GitBuildNumber" BeforeTargets="BeforeBuild">
+    <Exec Command="git rev-list --count HEAD"
+          ConsoleToMSBuild="true"
+          StandardOutputImportance="Low"
+          IgnoreExitCode="true"
+          WorkingDirectory="$(MSBuildProjectDirectory)">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_GitCount" />
+    </Exec>
+    <PropertyGroup>
+      <_GitCount Condition="'$(_GitCount)' == ''">dev</_GitCount>
+      <InformationalVersion>1.$(_GitCount.Trim())</InformationalVersion>
+    </PropertyGroup>
+  </Target>
+
 </Project>

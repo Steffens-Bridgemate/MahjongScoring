@@ -1,7 +1,17 @@
 @inherits LayoutComponentBase
+@using System.Reflection
 
 <div class="page">
     <main class="container py-2">
         @Body
     </main>
 </div>
+<span class="build-version">@_version</span>
+
+@code {
+    static readonly string _version =
+        (typeof(MainLayout).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion ?? "?")
+        .Split('+')[0];  // strip git hash that the SDK appends after '+'
+}
