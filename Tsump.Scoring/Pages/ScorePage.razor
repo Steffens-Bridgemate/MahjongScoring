@@ -232,7 +232,11 @@ else
     {
         var built = BuildResultUrl();
         if (built == null) return;
-        resultQrUrl = built.Value.url;
+        // Wrap the URL with framing markers FOR THE QR ONLY — the organizer's HID scanner
+        // types these out and the import panel detects them as a complete scan. The
+        // clipboard message (CopyResultLink) uses the plain URL so WhatsApp's link
+        // detection and tap-to-open keep working.
+        resultQrUrl = $"{ScoringPayloadCodec.ScanFrameStart}{built.Value.url}{ScoringPayloadCodec.ScanFrameEnd}";
         // Short title for the QR modal — full label/date is in the WhatsApp message.
         resultQrTitle = invite != null
             ? $"{Lang.Get("Hanchan")} {invite.SessionNumber} — {Lang.Get("Table")} {invite.TableNumber}"
