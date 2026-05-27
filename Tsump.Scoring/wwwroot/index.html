@@ -60,70 +60,94 @@
         window.copyTextToClipboard = function (plainText) {
             return navigator.clipboard.writeText(plainText);
         };
+        // Shared helper: renders a QR SVG (with optional title band above) to a PNG blob.
+        // Used by both the clipboard-copy and save-as-file paths so the rasterisation
+        // stays consistent. Canvas size is read from the SVG viewBox directly —
+        // img.naturalWidth is unreliable for viewBox-only SVGs across browsers.
+        async function renderQrToPngBlob(svgMarkup, qrSize, title, headerBg, headerFg) {
+            var vbMatch = svgMarkup.match(/viewBox="0 0 (\d+)/);
+            var size = vbMatch ? parseInt(vbMatch[1]) : qrSize;
+            var titleHeight = title ? 56 : 0;
+
+            var canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size + titleHeight;
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, size, size + titleHeight);
+
+            if (title) {
+                if (headerBg) {
+                    ctx.fillStyle = headerBg;
+                    ctx.fillRect(0, 0, size, titleHeight);
+                    ctx.fillStyle = headerFg || 'white';
+                } else {
+                    ctx.fillStyle = 'black';
+                }
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                var maxWidth = size * 0.9;
+                var fontSize = 28;
+                ctx.font = 'bold ' + fontSize + 'px sans-serif';
+                while (ctx.measureText(title).width > maxWidth && fontSize > 12) {
+                    fontSize -= 1;
+                    ctx.font = 'bold ' + fontSize + 'px sans-serif';
+                }
+                ctx.fillText(title, size / 2, titleHeight / 2);
+            }
+
+            var svgBlob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+            var url = URL.createObjectURL(svgBlob);
+            try {
+                var img = new Image();
+                await new Promise(function (resolve, reject) {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                    img.src = url;
+                });
+                ctx.drawImage(img, 0, titleHeight, size, size);
+            } finally {
+                URL.revokeObjectURL(url);
+            }
+
+            return await new Promise(function (resolve) { canvas.toBlob(resolve, 'image/png'); });
+        }
+
         window.copyQrImageToClipboard = async function (svgMarkup, qrSize, title, headerBg, headerFg) {
-            // Renders an SVG string to a PNG on an offscreen canvas (with an optional
-            // title band above the QR), then writes the result to the clipboard as
-            // image/png. Must be called from a user-gesture handler.
-            // Canvas size is read from the SVG viewBox attribute directly — relying on
-            // img.naturalWidth is unreliable for viewBox-only SVGs across browsers.
-            // headerBg/headerFg are optional — when set, the title band is filled with
-            // headerBg and the title text is drawn in headerFg. This is how the organizer
-            // (blue) and scoring app (green) QRs are visually distinguished in WhatsApp
-            // now that on-QR overlays were dropped for hardware-scanner compatibility.
+            // Writes the rasterised QR PNG to the clipboard. Must be called from a
+            // user-gesture handler. headerBg/headerFg colour the title band so the
+            // organizer (blue) and scoring app (green) QRs are visually distinguishable
+            // in WhatsApp now that on-QR overlays were dropped for scanner compatibility.
             if (!navigator.clipboard || !navigator.clipboard.write || !window.ClipboardItem) return false;
             try {
-                var vbMatch = svgMarkup.match(/viewBox="0 0 (\d+)/);
-                var size = vbMatch ? parseInt(vbMatch[1]) : qrSize;
-                var titleHeight = title ? 56 : 0;
-
-                var canvas = document.createElement('canvas');
-                canvas.width = size;
-                canvas.height = size + titleHeight;
-                var ctx = canvas.getContext('2d');
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, size, size + titleHeight);
-
-                if (title) {
-                    if (headerBg) {
-                        ctx.fillStyle = headerBg;
-                        ctx.fillRect(0, 0, size, titleHeight);
-                        ctx.fillStyle = headerFg || 'white';
-                    } else {
-                        ctx.fillStyle = 'black';
-                    }
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    var maxWidth = size * 0.9;
-                    var fontSize = 28;
-                    ctx.font = 'bold ' + fontSize + 'px sans-serif';
-                    while (ctx.measureText(title).width > maxWidth && fontSize > 12) {
-                        fontSize -= 1;
-                        ctx.font = 'bold ' + fontSize + 'px sans-serif';
-                    }
-                    ctx.fillText(title, size / 2, titleHeight / 2);
-                }
-
-                var svgBlob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
-                var url = URL.createObjectURL(svgBlob);
-                try {
-                    var img = new Image();
-                    await new Promise(function (resolve, reject) {
-                        img.onload = resolve;
-                        img.onerror = reject;
-                        img.src = url;
-                    });
-                    ctx.drawImage(img, 0, titleHeight, size, size);
-                } finally {
-                    URL.revokeObjectURL(url);
-                }
-
-                var pngBlob = await new Promise(function (resolve) { canvas.toBlob(resolve, 'image/png'); });
+                var pngBlob = await renderQrToPngBlob(svgMarkup, qrSize, title, headerBg, headerFg);
                 if (!pngBlob) return false;
-
                 await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
                 return true;
             } catch (e) {
                 console.warn('copyQrImageToClipboard failed:', e);
+                return false;
+            }
+        };
+
+        window.downloadQrAsPng = async function (svgMarkup, qrSize, title, headerBg, headerFg, filename) {
+            // Triggers a browser download of the rasterised QR PNG. Same rendering as
+            // the clipboard path; differs only in delivery (anchor + .click() instead of
+            // clipboard.write). The user's browser handles the actual file-picker UX.
+            try {
+                var pngBlob = await renderQrToPngBlob(svgMarkup, qrSize, title, headerBg, headerFg);
+                if (!pngBlob) return false;
+                var pngUrl = URL.createObjectURL(pngBlob);
+                var a = document.createElement('a');
+                a.href = pngUrl;
+                a.download = filename || 'qrcode.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(pngUrl);
+                return true;
+            } catch (e) {
+                console.warn('downloadQrAsPng failed:', e);
                 return false;
             }
         };
