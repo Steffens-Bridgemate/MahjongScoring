@@ -239,7 +239,8 @@ else
         try
         {
             var svg = Tsump.Scoring.QrCodeRenderer.ToSvg(resultQrUrl);
-            var ok = await JS.InvokeAsync<bool>("copyQrImageToClipboard", svg, 480, resultQrTitle);
+            var resultOverlay = Tsump.Scoring.QrCodeRenderer.Overlays.ScoringResult;
+            var ok = await JS.InvokeAsync<bool>("copyQrImageToClipboard", svg, 480, resultQrTitle, resultOverlay.BackgroundColor, "white");
             if (ok)
             {
                 resultQrCopied = true;
