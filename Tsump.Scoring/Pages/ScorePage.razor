@@ -104,24 +104,26 @@ else
 
         invite = ScoringPayloadCodec.DecodeInvite(payload);
         if (invite == null
-            || invite.PlayerIds == null || invite.PlayerNames == null
-            || invite.PlayerIds.Count != invite.PlayerNames.Count
-            || invite.PlayerIds.Count < 3 || invite.PlayerIds.Count > 4)
+            || invite.PlayerNames == null
+            || invite.PlayerNames.Count < 3 || invite.PlayerNames.Count > 4)
         {
             decodeError = true;
             return;
         }
 
         // Split Uma into 3/4 buckets based on the table size — the other one stays empty.
-        if (invite.PlayerIds.Count == 3)
+        if (invite.PlayerNames.Count == 3)
             uma3 = new List<int>(invite.Uma);
         else
             uma4 = new List<int>(invite.Uma);
 
+        // The wire format doesn't carry PlayerIds — the result rides back by position. We
+        // still need Guids internally because ScoreTable wires up edits via PlayerScore.PlayerId.
+        // Synthesise one per slot; same order as invite.PlayerNames, never leaves this session.
         tableAssignment = new TableAssignment
         {
             TableNumber = invite.TableNumber,
-            PlayerIds = new List<Guid>(invite.PlayerIds),
+            PlayerIds = invite.PlayerNames.Select(_ => Guid.NewGuid()).ToList(),
             Score = new TableScore(),
         };
     }
@@ -138,15 +140,16 @@ else
             var saved = await Storage.GetAsync<SavedScore>(StorageKey);
             if (saved != null)
             {
-                foreach (var ps in tableAssignment.Score!.PlayerScores.Where(p => !p.IsVirtual))
+                // Position-based restore — the SavedEntry at index i applies to the i-th
+                // non-virtual PlayerScore. (Synthetic PlayerIds are regenerated on every
+                // decode, so we can't match by Id anymore — but the order is stable.)
+                var realPlayers = tableAssignment.Score!.PlayerScores.Where(p => !p.IsVirtual).ToList();
+                for (int i = 0; i < saved.Entries.Count && i < realPlayers.Count; i++)
                 {
-                    var entry = saved.Entries.FirstOrDefault(e => e.PlayerId == ps.PlayerId);
-                    if (entry != null)
-                    {
-                        ps.EndPoints = entry.EndPoints;
-                        ps.Loan = entry.Loan;
-                        ps.Penalty = entry.Penalty;
-                    }
+                    var entry = saved.Entries[i];
+                    realPlayers[i].EndPoints = entry.EndPoints;
+                    realPlayers[i].Loan = entry.Loan;
+                    realPlayers[i].Penalty = entry.Penalty;
                 }
 
                 // Re-derive Mr. X (not persisted) and Uma from the restored real-player values.
@@ -168,9 +171,9 @@ else
 
     private string ResolveName(Guid id)
     {
-        if (invite == null) return id.ToString();
-        var idx = invite.PlayerIds.IndexOf(id);
-        return idx >= 0 ? invite.PlayerNames[idx] : id.ToString();
+        if (invite == null || tableAssignment == null) return id.ToString();
+        var idx = tableAssignment.PlayerIds.IndexOf(id);
+        return idx >= 0 && idx < invite.PlayerNames.Count ? invite.PlayerNames[idx] : id.ToString();
     }
 
     private async Task OnScoresComplete()
@@ -195,7 +198,7 @@ else
         if (invite == null || tableAssignment?.Score == null) return;
         var saved = new SavedScore(tableAssignment.Score.PlayerScores
             .Where(p => !p.IsVirtual)
-            .Select(p => new SavedEntry(p.PlayerId, p.EndPoints, p.Loan, p.Penalty))
+            .Select(p => new SavedEntry(p.EndPoints, p.Loan, p.Penalty))
             .ToList());
         await Storage.SetAsync(StorageKey, saved);
     }
@@ -204,9 +207,11 @@ else
     {
         if (invite == null || tableAssignment?.Score == null) return null;
 
+        // Position-based — each entry [endPoints, loan, penalty]. The organizer pairs by
+        // index against the table's known PlayerIds order. See ScoringPayloadCodec.Score*.
         var scores = tableAssignment.Score.PlayerScores
             .Where(p => !p.IsVirtual && p.EndPoints.HasValue)
-            .Select(p => new PlayerResultEntry(p.PlayerId, p.EndPoints!.Value, p.Loan, p.Penalty))
+            .Select(p => new[] { p.EndPoints!.Value, p.Loan, p.Penalty })
             .ToList();
 
         var result = new ScoringResult(invite.ContextId, invite.TableNumber, scores);
@@ -271,6 +276,8 @@ else
         StateHasChanged();
     }
 
+    // Local in-progress persistence. PlayerId is no longer stored here — restore is by
+    // position (the SavedEntry at index i applies to the i-th non-virtual PlayerScore).
     private record SavedScore(List<SavedEntry> Entries);
-    private record SavedEntry(Guid PlayerId, int? EndPoints, int Loan, int Penalty);
+    private record SavedEntry(int? EndPoints, int Loan, int Penalty);
 }
