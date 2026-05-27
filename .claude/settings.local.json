@@ -26,7 +26,20 @@
       "Bash(git -C \"C:/Users/aners/source/repos/Steffens-Bridgemate/MahjongScoring\" rev-list --count HEAD)",
       "Bash(dotnet build *)",
       "Bash(dotnet-ildasm \"C:/Users/aners/source/repos/Steffens-Bridgemate/MahjongScoring/Tsump.Scoring/bin/Release/net10.0/Tsump.Scoring.dll\")",
-      "Bash(dotnet msbuild *)"
+      "Bash(dotnet msbuild *)",
+      "Bash(git -C \"C:/Users/aners/source/repos/Steffens-Bridgemate/MahjongScoring\" branch -a)",
+      "Bash(git -C \"C:/Users/aners/source/repos/Steffens-Bridgemate/MahjongScoring\" log --oneline -5)",
+      "Bash(git -C \"C:/Users/aners/source/repos/Steffens-Bridgemate/MahjongScoring\" show 57e2be4 --stat)",
+      "Bash(git -C \"C:/Users/aners/source/repos/Steffens-Bridgemate/MahjongScoring\" show 4d579e0 --stat)",
+      "Bash(git -C \"C:/Users/aners/source/repos/Steffens-Bridgemate/MahjongScoring\" show 3a381f0 --stat)",
+      "Bash(git -C \"C:/Users/aners/source/repos/MahjongIndeler\" log --oneline -5)",
+      "Bash(git -C \"C:/Users/aners/source/repos/MahjongIndeler\" branch -a)",
+      "Bash(gh workflow *)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }

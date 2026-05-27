@@ -88,6 +88,7 @@ internal sealed class MainForm : Form
         {
             Clipboard.SetText(url);
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            BeginInvoke(Activate);  // re-grab focus so the next scan still lands here
             ShowStatus("✓  Geopend in browser", ColorOk, url);
         }
         else
