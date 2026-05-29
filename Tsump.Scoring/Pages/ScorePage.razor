@@ -58,9 +58,10 @@ else
     </div>
 
     <QrCodeModal IsOpen="showResultQr" Url="@resultQrUrl" Title="@resultQrTitle"
-                 Subtitle="@(resultQrCopied ? Lang.Get("QrCopiedToClipboard") : Lang.Get("QrCodeResultSubtitle"))"
+                 Subtitle="@Lang.Get("QrCodeResultSubtitle")"
                  Overlay="@Tsump.Scoring.QrCodeRenderer.Overlays.ScoringResult"
-                 OnClose="CloseResultQr" />
+                 OnClose="CloseResultQr"
+                 OnSave="DownloadResultQr" />
 }
 
 @code {
@@ -75,7 +76,6 @@ else
     private bool showResultQr;
     private string? resultQrUrl;
     private string? resultQrTitle;
-    private bool resultQrCopied;
     private string StorageKey => invite == null ? "" : $"tsump_scoring_{invite.ContextId}_{invite.TableNumber}";
 
     protected override void OnInitialized()
@@ -228,7 +228,7 @@ else
         return (importUrl, label);
     }
 
-    private async Task ShowResultQr()
+    private void ShowResultQr()
     {
         var built = BuildResultUrl();
         if (built == null) return;
@@ -242,21 +242,9 @@ else
             ? $"{Lang.Get("Hanchan")} {invite.SessionNumber} — {Lang.Get("Table")} {invite.TableNumber}"
             : built.Value.title;
         showResultQr = true;
-        resultQrCopied = false;
         StateHasChanged();
-
-        try
-        {
-            var svg = Tsump.Scoring.QrCodeRenderer.ToSvg(resultQrUrl);
-            var resultOverlay = Tsump.Scoring.QrCodeRenderer.Overlays.ScoringResult;
-            var ok = await JS.InvokeAsync<bool>("copyQrImageToClipboard", svg, 480, resultQrTitle, resultOverlay.BackgroundColor, "white");
-            if (ok)
-            {
-                resultQrCopied = true;
-                StateHasChanged();
-            }
-        }
-        catch { /* unsupported / blocked */ }
+        // No auto-copy to clipboard. The user explicitly opts in via the floppy "Save as"
+        // button in the modal header — see DownloadResultQr.
     }
 
     private void CloseResultQr()
@@ -264,6 +252,18 @@ else
         showResultQr = false;
         resultQrUrl = null;
         resultQrTitle = null;
+    }
+
+    private async Task DownloadResultQr()
+    {
+        if (string.IsNullOrEmpty(resultQrUrl)) return;
+        var svg = Tsump.Scoring.QrCodeRenderer.ToSvg(resultQrUrl);
+        var overlay = Tsump.Scoring.QrCodeRenderer.Overlays.ScoringResult;
+        // Build a safe filename from the modal title; fall back to "result" if unset.
+        var rawTitle = resultQrTitle ?? "result";
+        var safeTitle = string.Concat(rawTitle.Select(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' ? c : '_'));
+        var filename = $"{safeTitle}.png";
+        await JS.InvokeVoidAsync("downloadQrAsPng", svg, 480, resultQrTitle, overlay.BackgroundColor, "white", filename);
     }
 
     private async Task CopyResultLink()
