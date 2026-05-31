@@ -96,11 +96,22 @@ else
             return;
         }
 
-        // fragment may be "p=<payload>" or just "<payload>"
+        // Fragment is "p=<payload>" optionally followed by "&l=<lang>" (the organizer's primary
+        // language), or — for the oldest links — just "<payload>". Parse the &-separated params.
         var payload = fragment;
-        var prefix = "p=";
-        if (fragment.StartsWith(prefix, StringComparison.Ordinal))
-            payload = fragment.Substring(prefix.Length);
+        string? langParam = null;
+        foreach (var part in fragment.Split('&'))
+        {
+            var eq = part.IndexOf('=');
+            var key = eq >= 0 ? part.Substring(0, eq) : part;
+            var value = eq >= 0 ? part.Substring(eq + 1) : "";
+            if (key == "p") payload = value;
+            else if (key == "l") langParam = value;
+        }
+
+        // Display the scoring app in the language the organizer specified.
+        if (!string.IsNullOrEmpty(langParam))
+            Lang.SetLanguage(langParam);
 
         invite = ScoringPayloadCodec.DecodeInvite(payload);
         if (invite == null
