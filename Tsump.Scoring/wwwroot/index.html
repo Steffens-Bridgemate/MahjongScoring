@@ -11,7 +11,10 @@
     <base href="/" />
     <link rel="preload" id="webassembly" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <!-- Vendored locally (not from a CDN) so the PWA's icons render offline — see the
+         service worker's offline precache. The CSS references fonts/bootstrap-icons.woff2|woff
+         relative to itself. -->
+    <link rel="stylesheet" href="lib/bootstrap-icons/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="css/app.css" />
     <!-- Scoped CSS bundle — pulls in Tsump.Shared component styles (ScoreTable narrow/wide). -->
     <link href="Tsump.Scoring.styles.css" rel="stylesheet" />
