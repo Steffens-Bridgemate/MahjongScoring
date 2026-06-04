@@ -10,6 +10,28 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },
+    "Demo: 4-player table": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "score#p=ERMURAVMD64wM7FseMU4wa_fb_0rRhY2x7z80mxWp6LEXFbn1NRiNpfMxLxEXpfU3HyFqsySksy8dNOMkpKCYit9_eKS1LS01Lxi3aSizJT01NzEklS99MySjNIkvcx8fd_EjKz8vHTPvJTUnNQiAA",
+      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+      "applicationUrl": "http://localhost:5151",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "Demo: 3-player table (Mr. X)": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "score#p=ERMURAUsD64wMzGvOMzIsPwwIzOLa1kil1tqUUpmXmJeCqt7eWoer0tqbr5CVWZJSWZeumlGSUlBsZW-fnFJalpaal6xblJRZkp6am5iSapeemZJRmmSXma-vm9iRlZ-XrpnXkpqTmoRAA",
+      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+      "applicationUrl": "http://localhost:5151",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
     }
   }
 }

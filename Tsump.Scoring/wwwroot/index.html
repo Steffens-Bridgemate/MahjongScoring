@@ -154,29 +154,58 @@
                 return false;
             }
         };
+
+        // Score entry auto-advance: once an "End" cell holds a complete value — an integer part,
+        // a decimal separator, then exactly one digit (e.g. "28,5") — commit it to Blazor and jump
+        // to the next still-empty End cell. Lets a phone user fill a whole table without tapping
+        // each field. The marked cells are tagged data-end-input by ScoreTable.razor (real players
+        // only; Mr. X is derived). Both the narrow and wide layouts render End inputs, but only the
+        // visible one has an offsetParent, so the "next empty" search lands in the active layout.
+        (function () {
+            if (window.__tsumpEndAutoAdvance) return;
+            window.__tsumpEndAutoAdvance = true;
+            var complete = /^\d+[.,]\d$/;
+            document.addEventListener('input', function (e) {
+                var el = e.target;
+                if (!el || !el.matches || !el.matches('input[data-end-input]')) return;
+                if (!complete.test(el.value)) return;
+                el.dispatchEvent(new Event('change', { bubbles: true })); // commit via Blazor @onchange
+                var all = Array.prototype.slice.call(document.querySelectorAll('input[data-end-input]'));
+                for (var j = all.indexOf(el) + 1; j < all.length; j++) {
+                    var n = all[j];
+                    if (n.offsetParent !== null && !n.readOnly && n.value.trim() === '') {
+                        n.focus(); if (n.select) { n.select(); }
+                        return;
+                    }
+                }
+                el.blur(); // nothing left to fill
+            }, true);
+        })();
     </script>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
     <script>
-        // Restart-to-update PWA flow: a new version installs quietly and WAITS — it is never
-        // activated in place, so the running app is never reloaded mid-action. The new version
-        // takes effect the next time the app is launched fresh. The AppUpdateBanner just informs
-        // the user and offers a best-effort "close now" to help on devices that stay open forever.
+        // Auto-update PWA flow (scoring app only — the organizer keeps the passive
+        // restart-to-update banner). This app is used by inexperienced players who won't know how
+        // to fully close a PWA on iOS/Android, so a new deploy is applied AGGRESSIVELY: the waiting
+        // worker is told to activate at once and the page reloads the moment it takes control. The
+        // organizer can't do this because its saves are whole-collection read-modify-writes that a
+        // mid-action reload could corrupt; the scoring app only writes one small per-table key, so
+        // the risk is acceptable here.
         (function () {
             if (!('serviceWorker' in navigator)) return;
 
-            var dotNetRef = null;      // the Blazor AppUpdateBanner, once it registers
-            var updatePending = false; // an update was detected (maybe before the banner mounted)
+            var refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', function () {
+                if (refreshing) return; // guard against reload loops
+                refreshing = true;
+                window.location.reload();
+            });
 
-            window.registerAppUpdateCallback = function (ref) {
-                dotNetRef = ref;
-                if (updatePending) notifyBanner();
-            };
-
-            function notifyBanner() {
-                updatePending = true;
-                if (dotNetRef) {
-                    try { dotNetRef.invokeMethodAsync('OnUpdateAvailable'); } catch (e) { /* banner not mounted */ }
-                }
+            function activateWaiting(reg) {
+                // The published service worker calls skipWaiting() on this exact string (see
+                // service-worker.published.js) and clients.claim()s on activate, which fires the
+                // controllerchange handler above.
+                if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
             }
 
             navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' }).then(function (reg) {
@@ -184,11 +213,11 @@
                     if (!worker) return;
                     worker.addEventListener('statechange', function () {
                         // 'installed' while a controller already exists ⇒ an UPDATE, not first install.
-                        if (worker.state === 'installed' && navigator.serviceWorker.controller) notifyBanner();
+                        if (worker.state === 'installed' && navigator.serviceWorker.controller) activateWaiting(reg);
                     });
                 }
 
-                if (reg.waiting && navigator.serviceWorker.controller) notifyBanner();
+                if (reg.waiting && navigator.serviceWorker.controller) activateWaiting(reg);
                 watch(reg.installing);
                 reg.addEventListener('updatefound', function () { watch(reg.installing); });
 
