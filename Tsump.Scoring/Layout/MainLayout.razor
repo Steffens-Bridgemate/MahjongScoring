@@ -3,30 +3,45 @@
 @inject NavigationManager Nav
 @implements IDisposable
 
-@* Global tab bar so Scores / Calculator are reachable from every page — including the QR
-   deep-link /score page (the demo launches straight there). Scores is active everywhere except
-   the calculator route. *@
+@* Global Scores / Calculator tab strip. The tabs DO NOT navigate — switching only flips which view
+   is visible (CSS), so the routed page (@Body, e.g. the /score entry table) stays mounted and its
+   in-progress, not-yet-saved score entry is never lost. Both views are kept in the DOM; only their
+   visibility toggles. A real navigation (e.g. opening a new QR score link) resets to the Scores view. *@
 <div class="page">
     <ul class="nav nav-tabs px-2 pt-2">
         <li class="nav-item">
-            <a class="nav-link @(IsCalculator ? "" : "active")" href="">
+            <button type="button" class="nav-link @(showCalculator ? "" : "active")"
+                    @onclick="() => showCalculator = false">
                 <i class="bi bi-card-checklist me-1"></i>@Lang.Get("Scores")
-            </a>
+            </button>
         </li>
         <li class="nav-item">
-            <a class="nav-link @(IsCalculator ? "active" : "")" href="calculator">
+            <button type="button" class="nav-link @(showCalculator ? "active" : "")"
+                    @onclick="() => showCalculator = true">
                 <i class="bi bi-calculator me-1"></i>@Lang.Get("RiichiCalculator")
-            </a>
+            </button>
         </li>
     </ul>
     <main class="container py-2">
-        @Body
+        <div class="@(showCalculator ? "d-none" : null)">
+            @Body
+        </div>
+        <div class="@(showCalculator ? null : "d-none")">
+            <RiichiScoreCalculator />
+            <div class="mt-4">
+                <a class="btn btn-outline-primary" href="@StandaloneUrl" target="_blank" rel="noopener">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>@Lang.Get("RiichiInstallStandalone")
+                </a>
+            </div>
+        </div>
     </main>
 </div>
 
 @code {
-    private bool IsCalculator =>
-        Nav.ToBaseRelativePath(Nav.Uri).TrimStart('/').StartsWith("calculator", StringComparison.OrdinalIgnoreCase);
+    private bool showCalculator;
+
+    // Standalone calculator PWA (separate repo, GitHub Pages).
+    private const string StandaloneUrl = "https://steffens-bridgemate.github.io/MahjongRiichiCalc/";
 
     protected override void OnInitialized()
     {
@@ -35,8 +50,13 @@
     }
 
     private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    // A genuine navigation (new score deep-link) should land on the Scores view, not the calculator.
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
-        => InvokeAsync(StateHasChanged);
+    {
+        showCalculator = false;
+        InvokeAsync(StateHasChanged);
+    }
 
     public void Dispose()
     {
