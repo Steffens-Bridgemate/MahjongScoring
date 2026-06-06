@@ -4,51 +4,17 @@
 
 <PageTitle>Tsumo! Scoring</PageTitle>
 
-<ul class="nav nav-tabs mb-3">
-    <li class="nav-item">
-        <button type="button" class="nav-link @(tab == Tab.Scores ? "active" : "")" @onclick="() => tab = Tab.Scores">
-            <i class="bi bi-card-checklist me-1"></i>@Lang.Get("Scores")
-        </button>
-    </li>
-    <li class="nav-item">
-        <button type="button" class="nav-link @(tab == Tab.Calculator ? "active" : "")" @onclick="() => tab = Tab.Calculator">
-            <i class="bi bi-calculator me-1"></i>@Lang.Get("RiichiCalculator")
-        </button>
-    </li>
-</ul>
+<h1>Tsumo! Scoring</h1>
 
-@if (tab == Tab.Scores)
-{
-    <h1>Tsumo! Scoring</h1>
+<p class="text-muted">
+    @Lang.Get("ScoringLandingText")
+</p>
 
-    <p class="text-muted">
-        @Lang.Get("ScoringLandingText")
-    </p>
-
-    <p class="text-muted">
-        @Lang.Get("ScoringLandingHint")
-    </p>
-}
-else
-{
-    <h1><i class="bi bi-calculator me-2"></i>@Lang.Get("RiichiCalculator")</h1>
-
-    <RiichiScoreCalculator />
-
-    <div class="mt-4">
-        <a class="btn btn-outline-primary" href="@StandaloneUrl" target="_blank" rel="noopener">
-            <i class="bi bi-box-arrow-up-right me-1"></i>@Lang.Get("RiichiInstallStandalone")
-        </a>
-    </div>
-}
+<p class="text-muted">
+    @Lang.Get("ScoringLandingHint")
+</p>
 
 @code {
-    private enum Tab { Scores, Calculator }
-    private Tab tab = Tab.Scores;
-
-    // Standalone calculator PWA (separate repo, GitHub Pages). Adjust if the repo name differs.
-    private const string StandaloneUrl = "https://steffens-bridgemate.github.io/MahjongRiichiCalc/";
-
     protected override void OnInitialized() => Lang.OnLanguageChanged += StateHasChanged;
     public void Dispose() => Lang.OnLanguageChanged -= StateHasChanged;
 }

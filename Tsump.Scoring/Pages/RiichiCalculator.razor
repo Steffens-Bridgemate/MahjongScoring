@@ -1,0 +1,23 @@
+@page "/calculator"
+@inject LanguageService Lang
+@implements IDisposable
+
+<PageTitle>@Lang.Get("RiichiCalculator") - Tsumo!</PageTitle>
+
+<h1><i class="bi bi-calculator me-2"></i>@Lang.Get("RiichiCalculator")</h1>
+
+<RiichiScoreCalculator />
+
+<div class="mt-4">
+    <a class="btn btn-outline-primary" href="@StandaloneUrl" target="_blank" rel="noopener">
+        <i class="bi bi-box-arrow-up-right me-1"></i>@Lang.Get("RiichiInstallStandalone")
+    </a>
+</div>
+
+@code {
+    // Standalone calculator PWA (separate repo, GitHub Pages).
+    private const string StandaloneUrl = "https://steffens-bridgemate.github.io/MahjongRiichiCalc/";
+
+    protected override void OnInitialized() => Lang.OnLanguageChanged += StateHasChanged;
+    public void Dispose() => Lang.OnLanguageChanged -= StateHasChanged;
+}
