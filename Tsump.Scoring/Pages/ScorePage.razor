@@ -21,10 +21,14 @@ else if (invite == null || tableAssignment == null)
 }
 else
 {
-    @if (!string.IsNullOrEmpty(invite.Title))
-    {
-        <h5 class="text-muted mb-2">@invite.Title</h5>
-    }
+    @* Heading is reconstructed here from the payload's numbers — the invite no longer carries a
+       full pre-formatted title (that bloated the QR). invite.Title now carries only an optional
+       compact event name (the tournament's short name); "Hanchan N" is rebuilt locally. *@
+    <h5 class="text-muted mb-2">
+        @(string.IsNullOrEmpty(invite.Title)
+            ? $"{Lang.Get("Hanchan")} {invite.SessionNumber}"
+            : $"{invite.Title} — {Lang.Get("Hanchan")} {invite.SessionNumber}")
+    </h5>
     <h1 class="mb-3">@Lang.Get("Table") @invite.TableNumber</h1>
 
     <ScoreTable @key="clearVersion"
@@ -235,7 +239,10 @@ else
             ? invite.OrganizerUrl!.TrimEnd('/')
             : Nav.BaseUri.TrimEnd('/');
         var importUrl = $"{organizerBase}/import-score#r={encoded}";
-        var label = invite.Title ?? $"Table {invite.TableNumber}";
+        // Reconstructed label for the WhatsApp result message (invite.Title is now just the optional
+        // short event name, not the full heading).
+        var label = $"{Lang.Get("Hanchan")} {invite.SessionNumber} — {Lang.Get("Table")} {invite.TableNumber}";
+        if (!string.IsNullOrEmpty(invite.Title)) label = $"{invite.Title} — {label}";
         return (importUrl, label);
     }
 
